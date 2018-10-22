@@ -1,32 +1,40 @@
 # -*- coding: utf-8 -*-
 """Example python client for connecting with the spot-on.energy forecasting API.
 
-The forecasting API is secured with [HMAC Signature authentication](https://tools.ietf.org/html/draft-cavage-http-signatures-10).
-The code below demonstrates how to create valid request headers in order to access the data from the API.
+The forecasting API is secured using oauth2 with client credentials flow. The code below demonstrates how to obtain
+an access token and use this to make requests.
 """
 
 import requests
-from auth import generate_request_headers
-import os
+from os import getenv
 
-# Retrieve credentials from environment variables.
-username = os.getenv('USERNAME')
-secret = os.getenv('SECRET')
+client_id = getenv("CLIENT_ID", "CLIENT_ID_HERE_ON_IN_ENVIRONMENT_VARIABLE")
+client_secret = getenv("CLIENT_SECRET", "CLIENT_SECRET_HERE_ON_IN_ENVIRONMENT_VARIABLE")
+auth_url = "https://spot-on.eu.auth0.com/oauth/token"
 
-url = 'https://api.spot-on.energy/v1/forecasts'
+host = "https://api.spot-on.energy"
+endpoint = "{}/v1/forecasts".format(host)
 
-# Set the query parameters. Depending on your subscription, these might be restricted.
-# See https://spot-on.energy/#products.
-query_params = {'markets' : 'EPEX_NL_DAY_AHEAD',
-                'days'    : 1}
+# Request auth token
+payload = {
+    'client_id': client_id,
+    'client_secret': client_secret,
+    'audience': host,
+    'grant_type': 'client_credentials'
+}
+response = requests.post(auth_url, json=payload)
 
-# Generate the request headers. The header fields that are used are *Authorization* and *Date*.
-# The hmac signature is included in the *Authorization* field.
-get_request_headers = generate_request_headers(username, secret, url, query_params)
+# Make a request using auth token
+headers = {
+    'Authorization': 'Bearer {}'.format(response.json()['access_token'])
+}
 
-# An example request
-r = requests.get(url, headers=get_request_headers, params=query_params)
+payload = {
+    'markets': 'EPEX_NL_DAY_AHEAD' #,
+    #'startdate': 'yyyy-mm-dd',
+    #'endate': 'yyyy-mm-dd'
+}
 
-# Verify that the response is ok and print the result.
-print('Response code: {}\n'.format(r.status_code))
-print(r.text)
+response = requests.get(endpoint, headers=headers, json=payload)
+response.raise_for_status()
+print(response.text)
