@@ -29,12 +29,13 @@ headers = {
     'Authorization': 'Bearer {}'.format(response.json()['access_token'])
 }
 
-payload = {
-    'markets': 'EPEX_NL_DAY_AHEAD' #,
+params = {
+    'markets': 'EPEX_NL_DAY_AHEAD'#,
     #'startdate': 'yyyy-mm-dd',
-    #'endate': 'yyyy-mm-dd'
+    #'enddate': 'yyyy-mm-dd'
 }
 
-response = requests.get(endpoint, headers=headers, json=payload)
+
+response = requests.get(endpoint, headers=headers, params=params)
 response.raise_for_status()
 print(response.text)
